@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>小鱼多媒体创作工具</title>
+<meta name="description" content="Laimai Pro 多媒体创作工具 - 前端项目"/>
+<link rel="stylesheet" href="css/main.css"/>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://code.iconify.design/3/3.1.1/iconify.min.js"></script>
+</head>
+<body class="bg-slate-50 font-sans text-slate-800 antialiased min-h-screen flex items-center justify-center p-8">
+<!-- Main Application Window -->
+<div class="main-container bg-white rounded-2xl border border-slate-200 window-shadow flex flex-col overflow-hidden relative">
+<!-- Top Navigation Bar -->
+<header class="h-12 border-b border-slate-200 bg-white flex items-center px-4 justify-between shrink-0">
+<div class="flex items-center space-x-6">
+<div class="flex items-center space-x-2">
+<span class="iconify text-blue-600 text-2xl" data-icon="logos:google-cloud-functions"></span>
+<span class="font-bold text-slate-700 tracking-tight">Laimai Pro</span>
+</div>
+<nav class="flex space-x-4 text-sm text-slate-500">
+<button type="button" class="hover:text-blue-600 transition-colors" data-action="nav-file">文件</button>
+<button type="button" class="hover:text-blue-600 transition-colors" onclick="toggleModal('settingsModal')">设置</button>
+<button type="button" class="hover:text-blue-600 transition-colors" data-action="nav-service">客服</button>
+<button type="button" class="hover:text-blue-600 transition-colors" data-action="nav-help">帮助</button>
+</nav>
+</div>
+<div class="flex items-center space-x-3">
+<div class="text-xs text-slate-400 bg-slate-100 px-2 py-1 rounded">2026-02-05</div>
+<button class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100"><span class="iconify" data-icon="mdi:minus"></span></button>
+<button class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100"><span class="iconify" data-icon="mdi:window-maximize"></span></button>
+<button class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-red-500 hover:text-white"><span class="iconify" data-icon="mdi:close"></span></button>
+</div>
+</header>
+
+<!-- Main Content Area: Dashboard (Default View) -->
+<main class="flex-1 flex flex-col overflow-hidden" id="dashboardView">
+<!-- Toolbar -->
+<div class="p-6 border-b border-slate-100 bg-white flex items-center justify-between">
+<h2 class="text-xl font-bold text-slate-800">项目管理</h2>
+<div class="flex items-center space-x-3">
+<button class="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-blue-700 transition-all shadow-sm" onclick="toggleModal('createProjectModal')">
+<span class="iconify" data-icon="mdi:plus"></span>
+<span>新建项目</span>
+</button>
+<button type="button" class="bg-white border border-slate-200 px-4 py-2 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors" data-action="refresh">刷新</button>
+<button type="button" class="bg-white border border-slate-200 px-4 py-2 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors" data-action="batch">批量处理</button>
+</div>
+</div>
+<!-- Project Table -->
+<div class="flex-1 p-6 overflow-auto hide-scrollbar">
+<table class="w-full border-collapse">
+<thead>
+<tr class="text-left text-slate-400 text-xs uppercase tracking-wider border-b border-slate-100">
+<th class="pb-4 font-medium pl-4">项目 ID</th>
+<th class="pb-4 font-medium">项目名称</th>
+<th class="pb-4 font-medium text-center">创建时间</th>
+<th class="pb-4 font-medium">状态</th>
+<th class="pb-4 font-medium text-right pr-4">操作</th>
+</tr>
+</thead>
+<tbody class="text-sm">
+<tr class="group hover:bg-blue-50/50 transition-colors border-b border-slate-50">
+<td class="py-4 pl-4 font-mono text-slate-500">PROJ-2026-001</td>
+<td class="py-4 font-semibold text-slate-700">杰罗姆镇神秘事件调查</td>
+<td class="py-4 text-center text-slate-500">2026-02-05 14:32</td>
+<td class="py-4">
+<span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-[10px] font-bold">已就绪</span>
+</td>
+<td class="py-4 text-right pr-4">
+<button class="bg-blue-600 text-white px-4 py-1.5 rounded-md hover:bg-blue-700 transition-all font-medium" onclick="switchView('projectView')">打开项目</button>
+</td>
+</tr>
+</tbody>
+</table>
+<!-- Empty State Preview -->
+<div class="mt-8 border-2 border-dashed border-slate-100 rounded-xl flex flex-col items-center justify-center p-20 opacity-40">
+<span class="iconify text-6xl text-slate-300 mb-4" data-icon="mdi:folder-outline"></span>
+<p class="text-slate-400">暂无更多项目，点击"新建"开始创作</p>
+</div>
+</div>
+<!-- Footer Stats -->
+<footer class="h-8 border-t border-slate-200 bg-slate-50 flex items-center px-4 justify-between text-[11px] text-slate-400 shrink-0">
+<div class="flex space-x-4">
+<span>共 1 个项目</span>
+<span class="text-green-500">项目创建成功: 1</span>
+</div>
+<div class="flex space-x-4">
+<span>存储占用: 45.2 MB</span>
+<span>系统状态: 正常</span>
+</div>
+</footer>
+</main>
+
+<!-- Project Workspace View (Hidden by Default) -->
+<div class="hidden flex-1 flex flex-col overflow-hidden" id="projectView">
+<!-- 第二级工具栏：项目与批量操作 -->
+<div class="h-12 border-b border-slate-200 flex items-center px-4 justify-between bg-white">
+<div class="flex items-center space-x-3">
+<button class="flex items-center space-x-1 text-slate-500 hover:bg-slate-50 px-2 py-1 rounded border border-slate-200 text-xs" onclick="switchView('dashboardView')">
+<svg aria-hidden="true" class="iconify iconify--material-symbols" data-icon="material-symbols:arrow-back" height="1em" role="img" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="m7.825 13l5.6 5.6L12 20l-8-8l8-8l1.425 1.4l-5.6 5.6H20v2z" fill="currentColor"></path></svg>
+<span>返回主界面</span>
+</button>
+<div class="h-4 w-px bg-slate-200"></div>
+<span class="text-sm font-bold text-slate-800 tracking-tight">项目: Story_0205_Winter</span>
+</div>
+<div class="flex items-center space-x-3">
+<div class="flex bg-slate-100 p-1 rounded-md">
+<div class="relative group/prompt-batch">
+<button class="bg-indigo-600 text-white px-4 py-1.5 rounded text-xs font-medium hover:bg-indigo-700 transition-colors flex items-center space-x-1">
+<span>一键提示词</span>
+<svg height="12" viewbox="0 0 24 24" width="12" xmlns="http://www.w3.org/2000/svg"><path d="m7 10l5 5l5-5z" fill="currentColor"></path></svg>
+</button>
+<div class="absolute top-full left-0 mt-1 w-40 bg-white border border-slate-200 shadow-xl rounded-lg py-2 opacity-0 invisible group-hover/prompt-batch:opacity-100 group-hover/prompt-batch:visible transition-all z-50">
+<button class="w-full text-left px-4 py-2 text-xs text-slate-700 hover:bg-indigo-50 hover:text-indigo-600">批量生产图片提示词</button>
+<button class="w-full text-left px-4 py-2 text-xs text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 border-t border-slate-50">批量生产视频提示词</button>
+</div>
+</div>
+<button class="px-3 py-1 text-xs font-medium text-slate-600 hover:bg-white hover:shadow-sm rounded transition-all">批量生成图片</button>
+<button class="px-3 py-1 text-xs font-medium text-slate-600 hover:bg-white hover:shadow-sm rounded transition-all">批量生成视频</button>
+</div>
+<div class="relative group/export">
+<button class="px-4 py-1.5 text-xs font-medium text-slate-600 bg-white border border-slate-200 rounded-md hover:bg-slate-50 hover:border-slate-300 transition-colors">导出草稿</button>
+<div class="absolute top-full right-0 mt-1 w-40 bg-white border border-slate-200 shadow-xl rounded-lg py-2 opacity-0 invisible group-hover/export:opacity-100 group-hover/export:visible transition-all z-50">
+<div class="px-3 py-1.5 text-[10px] text-slate-400 font-bold uppercase tracking-wider">选择导出格式</div>
+<button class="w-full text-left px-4 py-2 text-xs text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 flex items-center space-x-2">
+<span class="iconify text-base" data-icon="logos:tiktok-icon"></span>
+<span>导出剪映草稿</span>
+</button>
+<button class="w-full text-left px-4 py-2 text-xs text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 flex items-center space-x-2 border-t border-slate-50">
+<span class="iconify text-base" data-icon="simple-icons:capcut"></span>
+<span>导出国际剪映草稿</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- 第三级工具栏：精细功能 -->
+<div class="h-11 border-b border-slate-100 flex items-center px-4 space-x-4 bg-slate-50/50 text-[11px] text-slate-500 overflow-x-auto hide-scrollbar">
+<button class="flex items-center space-x-1 bg-white border border-slate-200 px-2 py-1 rounded shadow-sm hover:border-indigo-300">
+<svg aria-hidden="true" class="iconify text-indigo-500 iconify--material-symbols" data-icon="material-symbols:auto-awesome" height="1em" role="img" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="m19 9l-1.25-2.75L15 5l2.75-1.25L19 1l1.25 2.75L23 5l-2.75 1.25L19 9Zm0 14l-1.25-2.75L15 19l2.75-1.25L19 15l1.25 2.75L23 19l-2.75 1.25L19 23ZM9 20l-2.5-5.5L1 12l5.5-2.5L9 4l2.5 5.5L17 12l-5.5 2.5L9 20Z" fill="currentColor"></path></svg>
+<span>智能分镜</span>
+</button>
+<div class="flex items-center space-x-1">
+<input checked="" class="rounded text-indigo-600 w-3 h-3" type="checkbox"/>
+<span>提示词生成规则</span>
+</div>
+<button class="flex items-center space-x-1 hover:text-slate-800" type="button" onclick="toggleModal('characterListModal')">
+<svg aria-hidden="true" class="iconify text-sm iconify--material-symbols" data-icon="material-symbols:group" height="1em" role="img" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M1 20v-2.8q0-.85.438-1.562T2.6 14.55q1.55-.775 3.15-1.162T9 13t3.25.388t3.15 1.162q.725.375 1.163 1.088T17 17.2V20zm18 0v-3q0-1.1-.612-2.113T16.65 13.15q1.275.15 2.4.513t2.1.887q.9.5 1.375 1.112T23 17v3zM9 12q-1.65 0-2.825-1.175T5 8t1.175-2.825T9 4t2.825 1.175T13 8t-1.175 2.825T9 12m10-4q0 1.65-1.175 2.825T15 12q-.275 0-.7-.062t-.7-.138q.675-.8 1.038-1.775T15 8t-.362-2.025T13.6 4.2q.35-.125.7-.163T15 4q1.65 0 2.825 1.175T19 8" fill="currentColor"></path></svg>
+<span>人物列表</span>
+</button>
+<button class="flex items-center space-x-1 hover:text-slate-800">
+<svg aria-hidden="true" class="iconify text-sm iconify--material-symbols" data-icon="material-symbols:person-search" height="1em" role="img" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M11 12q-1.65 0-2.825-1.175T7 8t1.175-2.825T11 4t2.825 1.175T15 8t-1.175 2.825T11 12m11.1 11.5l-3.2-3.2q-.525.3-1.125.5T16.5 21q-1.875 0-3.187-1.312T12 16.5t1.313-3.187T16.5 12t3.188 1.313T21 16.5q0 .675-.2 1.275t-.5 1.125l3.2 3.2zM16.5 19q1.05 0 1.775-.725T19 16.5t-.725-1.775T16.5 14t-1.775.725T14 16.5t.725 1.775T16.5 19m-5.475-6q-1.05 1.55-1.05 3.5t1.05 3.5H3v-2.775q0-.85.425-1.575t1.175-1.1q1.275-.65 2.875-1.1t3.55-.45" fill="currentColor"></path></svg>
+<span>一键识别人物</span>
+</button>
+<button class="flex items-center space-x-1 hover:text-slate-800">
+<svg aria-hidden="true" class="iconify text-sm iconify--material-symbols" data-icon="material-symbols:translate" height="1em" role="img" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="m11.9 22l4.55-12h2.1l4.55 12H21l-1.075-3.05h-4.85L14 22zM4 19l-1.4-1.4l5.05-5.05q-.875-.875-1.588-2T4.75 8h2.1q.5.975 1 1.7t1.2 1.45q.825-.825 1.713-2.313T12.1 6H1V4h7V2h2v2h7v2h-2.9q-.525 1.8-1.575 3.7t-2.075 2.9l2.4 2.45l-.75 2.05l-3.05-3.125zm11.7-1.8h3.6l-1.8-5.1z" fill="currentColor"></path></svg>
+<span>一键翻译</span>
+</button>
+<div class="flex items-center space-x-1">
+<input checked="" class="rounded text-indigo-600 w-3 h-3" type="checkbox"/>
+<span>视频提示词规则</span>
+</div>
+<button class="flex items-center space-x-1 bg-white border border-slate-200 px-2 py-1 rounded shadow-sm hover:border-indigo-300">
+<svg aria-hidden="true" class="iconify text-sm text-indigo-500 iconify--material-symbols" data-icon="material-symbols:timeline" height="1em" role="img" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M9 21q-.825 0-1.412-.587T7 19v-4H5q-.825 0-1.412-.587T3 13V5q0-.825.588-1.412T5 3h6q.825 0 1.413.588T13 5v3h2q.825 0 1.413.588T17 10v2h2q.825 0 1.413.588T21 14v5q0 .825-.587 1.413T19 21z" fill="currentColor"></path></svg>
+<span>一键关键帧</span>
+</button>
+<button class="hover:text-red-500">重置分组</button>
+<button class="hover:text-slate-800">重置提示词</button>
+<div class="flex-grow"></div>
+<span class="text-slate-400 italic">提示：右键点击字幕行可进行合并和拆分操作</span>
+</div>
+<!-- 主内容区域：垂直分组流 -->
+<main class="flex-grow overflow-y-auto p-4 space-y-4 bg-slate-100/50">
+<!-- 分组卡片 1：支持点击视觉提示词切换为详情视图 -->
+<div class="bg-white rounded-lg border border-slate-200 shadow-sm p-4 flex space-x-4" id="groupCard1">
+<!-- 默认视图：截图1 -->
+<div class="group-card-view flex space-x-4 flex-grow w-full" id="groupCard1Default">
+<!-- 场景文本列表 -->
+<div class="w-48 space-y-2 shrink-0">
+<div class="text-[10px] font-bold text-slate-400 mb-1">场景文本 (#1-4)</div>
+<div class="bg-slate-50 border border-slate-100 rounded p-2 text-xs text-slate-700 leading-relaxed">
+<span class="text-indigo-500 font-mono mr-1">#1</span> this is a true story
+</div>
+<div class="bg-slate-50 border border-slate-100 rounded p-2 text-xs text-slate-700 leading-relaxed">
+<span class="text-indigo-500 font-mono mr-1">#2</span> on May 2025 in Jerome Florida
+</div>
+<div class="bg-slate-50 border border-slate-100 rounded p-2 text-xs text-slate-700 leading-relaxed">
+<span class="text-indigo-500 font-mono mr-1">#3</span> something happened before
+</div>
+</div>
+<!-- 人物选择 -->
+<div class="w-24 shrink-0 border-x border-slate-100 px-3">
+<div class="text-[10px] font-bold text-slate-400 mb-2 underline decoration-indigo-200 decoration-2">角色映射</div>
+<div class="space-y-1.5">
+<div class="flex items-center space-x-1.5 text-[10px]">
+<input class="w-3 h-3 text-indigo-600" type="checkbox"/>
+<span>罗伯特马</span>
+</div>
+<div class="flex items-center space-x-1.5 text-[10px]">
+<input class="w-3 h-3 text-indigo-600" type="checkbox"/>
+<span>邻居</span>
+</div>
+<div class="flex items-center space-x-1.5 text-[10px]">
+<input class="w-3 h-3 text-indigo-600" type="checkbox"/>
+<span>警员</span>
+</div>
+</div>
+</div>
+<!-- 图片提示词编辑区 -->
+<div class="flex-grow flex flex-col space-y-2">
+<div class="text-[10px] font-bold text-slate-400">图片提示词</div>
+<div class="flex-grow relative text-xs">
+<textarea class="w-full h-32 bg-slate-50 border border-slate-200 rounded p-3 text-slate-600 leading-relaxed resize-none focus:ring-1 focus:ring-indigo-300 outline-none">longjuan, "This is a scene from a Winnie the Pooh animation, Disney afternoon style. A main palette of muted green and gray with auxiliary colors of pale yellow. The scene is set in a quiet, overgrown suburban backyard with tall grass, an old man with thin white hair."</textarea>
+<div class="absolute bottom-2 right-2 flex space-x-1">
+<button class="bg-emerald-500 text-white px-2 py-0.5 rounded-sm hover:bg-emerald-600">新生提示</button>
+<button class="bg-blue-500 text-white px-2 py-0.5 rounded-sm hover:bg-blue-600">翻译</button>
+<button class="bg-orange-500 text-white px-2 py-0.5 rounded-sm hover:bg-orange-600">中文</button>
+</div>
+</div>
+</div>
+<!-- 视频提示词编辑区 -->
+<div class="flex-grow flex flex-col space-y-2">
+<div class="text-[10px] font-bold text-slate-400">视频提示词 (Video Prompts)</div>
+<div class="flex-grow relative text-xs">
+<textarea class="w-full h-32 bg-slate-50 border border-slate-200 rounded p-3 text-slate-600 leading-relaxed resize-none focus:ring-1 focus:ring-indigo-300 outline-none" placeholder="输入视频运动描述...">The camera pans slowly from left to right, capturing the gentle swaying of the tall grass. The old man turns his head slightly toward the camera.</textarea>
+<div class="absolute bottom-2 right-2 flex space-x-1">
+<button class="bg-slate-500 text-white px-2 py-0.5 rounded-sm hover:bg-slate-600">自动增强</button>
+</div>
+</div>
+</div>
+<!-- 生成预览区 -->
+<div class="w-[280px] shrink-0 space-y-2">
+<div class="flex justify-between items-center">
+<div class="text-[10px] font-bold text-slate-400">资产预览与生成</div>
+<div class="flex items-center space-x-2">
+<label class="flex items-center space-x-1 cursor-pointer group">
+<input checked="" class="w-2.5 h-2.5 text-indigo-600 focus:ring-0" name="asset-view" type="radio"/>
+<span class="text-[9px] text-slate-500 group-hover:text-indigo-600">放大</span>
+</label>
+<label class="flex items-center space-x-1 cursor-pointer group">
+<input class="w-2.5 h-2.5 text-indigo-600 focus:ring-0" name="asset-view" type="radio"/>
+<span class="text-[9px] text-slate-500 group-hover:text-indigo-600">缩小</span>
+</label>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-2 h-32">
+<!-- 图片容器 -->
+<div class="relative bg-slate-100 rounded-md overflow-hidden border border-dashed border-slate-300 flex flex-col items-center justify-center group">
+<img alt="Scene Thumbnail 1" class="absolute inset-0 w-full h-full object-cover opacity-20 group-hover:opacity-40 transition-opacity" id="img1" src="https://modao.cc/agent-py/media/generated_images/2026-02-05/e5e843c884f0483ba3dbd5240ab8610b.jpg"/>
+<svg aria-hidden="true" class="iconify text-2xl text-slate-300 iconify--material-symbols" data-icon="material-symbols:image-outline" height="1em" role="img" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M5 21q-.825 0-1.412-.587T3 19V5q0-.825.588-1.412T5 3h14q.825 0 1.413.588T21 5v14q0 .825-.587 1.413T19 21zm0-2h14V5H5zm1-2h12l-3.75-5l-3 4L9 13zm-1 2V5z" fill="currentColor"></path></svg>
+<div class="absolute top-1 left-1 flex flex-col space-y-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+<button class="flex items-center space-x-1 px-2 py-1 bg-white/90 shadow-sm rounded text-slate-700 hover:text-indigo-600" title="上传">
+<span class="text-[9px] font-medium">上传图片</span>
+<svg aria-hidden="true" class="iconify text-xs iconify--material-symbols" data-icon="material-symbols:upload" height="1em" role="img" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M11 16V7.85l-2.6 2.6L7 9l5-5l5 5l-1.4 1.45l-2.6-2.6V16zm-5 4q-.825 0-1.412-.587T4 18v-3h2v3h12v-3h2v3q0 .825-.587 1.413T18 20z" fill="currentColor"></path></svg>
+</button>
+</div>
+<label class="mt-1 cursor-pointer flex flex-col items-center">
+<span class="text-[10px] text-indigo-500 font-medium hover:underline">点击查看</span>
+<input accept="image/*" class="hidden" type="file"/>
+<span class="text-[9px] text-slate-400 mt-0.5">或点击生成</span>
+</label>
+<div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center space-x-2 transition-opacity pointer-events-none">
+<div class="pointer-events-auto flex space-x-2">
+<button class="p-1.5 bg-white rounded-full text-blue-600 hover:scale-110"><svg aria-hidden="true" class="iconify iconify--material-symbols" data-icon="material-symbols:refresh" height="1em" role="img" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M12 20q-3.35 0-5.675-2.325T4 12t2.325-5.675T12 4q1.725 0 3.3.712T18 6.75V4h2v7h-7V9h4.2q-.8-1.4-2.187-2.2T12 6Q9.5 6 7.75 7.75T6 12t1.75 4.25T12 18q1.925 0 3.475-1.1T17.65 14h2.1q-.7 2.65-2.85 4.325T12 20" fill="currentColor"></path></svg></button>
+</div>
+</div>
+</div>
+<!-- 视频容器 -->
+<div class="relative bg-slate-100 rounded-md overflow-hidden border border-dashed border-slate-300 flex flex-col items-center justify-center group">
+<svg aria-hidden="true" class="iconify text-2xl text-slate-300 iconify--material-symbols" data-icon="material-symbols:movie-outline" height="1em" role="img" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="m4 4l2 4h3L7 4h2l2 4h3l-2-4h2l2 4h3l-2-4h3q.825 0 1.413.588T22 6v12q0 .825-.587 1.413T20 20H4q-.825 0-1.412-.587T2 18V6q0-.825.588-1.412T4 4m0 6v8h16v-8zm0 0v8z" fill="currentColor"></path></svg>
+<span class="text-[10px] text-slate-400 mt-1">等待中...</span>
+</div>
+</div>
+<div class="flex space-x-2">
+<button class="flex-1 bg-indigo-600 text-white text-[11px] py-1.5 rounded hover:bg-indigo-700 font-medium tracking-wide">生成图片</button>
+<button class="flex-1 bg-purple-600 text-white text-[11px] py-1.5 rounded hover:bg-purple-700 font-medium tracking-wide flex items-center justify-center space-x-1">
+<svg aria-hidden="true" class="iconify iconify--material-symbols" data-icon="material-symbols:videocam" height="1em" role="img" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M4 20q-.825 0-1.412-.587T2 18V6q0-.825.588-1.412T4 4h12q.825 0 1.413.588T18 6v4.5l4-4v11l-4-4V18q0 .825-.587 1.413T16 20z" fill="currentColor"></path></svg>
+<span>生成视频</span>
+</button>
+</div>
+</div>
+</div>
+<!-- 详情视图：截图2（点击视觉提示词后显示）- 视觉提示词限制宽度，右侧保留资产预览 -->
+<div class="group-card-view hidden flex space-x-4 flex-grow w-full" id="groupCard1Detail">
+<!-- 图片提示词：点击/聚焦时输入框延伸 -->
+<div class="w-52 shrink-0 flex flex-col space-y-2 image-prompt-block" id="detailImagePromptBlock">
+<div class="text-[10px] font-bold text-slate-400 mb-1">图片提示词</div>
+<div class="image-prompt-input-wrap rounded-lg border border-slate-200 bg-slate-50 transition-all duration-200 ease-out overflow-hidden">
+<textarea class="image-prompt-input w-full min-h-[3.5rem] max-h-[3.5rem] resize-none border-0 bg-transparent p-3 text-xs text-slate-700 leading-relaxed placeholder-slate-400 focus:outline-none focus:ring-0" placeholder="输入图片提示词，点击展开编辑…" rows="2">neighbors heard growing screams, emergency responders arrived — night scene, flashlight, worried expressions.</textarea>
+</div>
+</div>
+<div class="w-24 shrink-0 px-3">
+<div class="space-y-1.5 pt-4">
+<div class="flex items-center space-x-1.5 text-[10px] bg-indigo-50 p-1 rounded">
+<input checked="" class="w-3 h-3 text-indigo-600" type="checkbox"/>
+<span class="font-bold text-indigo-700">警探</span>
+</div>
+</div>
+</div>
+<!-- 视觉提示词：限制最大宽度，与截图2红框比例一致，右侧留出资产预览 -->
+<div class="flex-1 min-w-0 max-w-xl flex flex-col space-y-2">
+<div class="text-[10px] font-bold text-slate-400">视觉提示词 (Hanna-Barbera Style)</div>
+<div class="flex-grow relative text-xs text-slate-500 italic border border-slate-100 rounded p-3 bg-slate-50 min-h-[7rem]">
+longjuan, "Scooby-Doo animation style, deep purple and dark green night palette. A suburban street view through a window, two neighbors holding a flashlight, worried expressions..."
+<div class="absolute bottom-2 right-2 flex space-x-1">
+<button class="bg-emerald-500 text-white px-2 py-0.5 rounded-sm hover:bg-emerald-600">修改提示</button>
+<button class="bg-blue-500 text-white px-2 py-0.5 rounded-sm hover:bg-blue-600" data-action="back-to-visual-default">查看源文</button>
+</div>
+</div>
+</div>
+<!-- 资产预览与生成：编辑时同屏可见 -->
+<div class="w-[280px] shrink-0 space-y-2">
+<div class="flex justify-between items-center">
+<div class="text-[10px] font-bold text-slate-400">资产预览与生成</div>
+<div class="flex items-center space-x-2">
+<label class="flex items-center space-x-1 cursor-pointer group">
+<input checked="" class="w-2.5 h-2.5 text-indigo-600 focus:ring-0" name="asset-view-detail" type="radio"/>
+<span class="text-[9px] text-slate-500 group-hover:text-indigo-600">放大</span>
+</label>
+<label class="flex items-center space-x-1 cursor-pointer group">
+<input class="w-2.5 h-2.5 text-indigo-600 focus:ring-0" name="asset-view-detail" type="radio"/>
+<span class="text-[9px] text-slate-500 group-hover:text-indigo-600">缩小</span>
+</label>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-2 h-32">
+<div class="relative bg-slate-100 rounded-md overflow-hidden border border-dashed border-slate-300 flex flex-col items-center justify-center group">
+<img alt="Scene Thumbnail" class="absolute inset-0 w-full h-full object-cover opacity-20 group-hover:opacity-40 transition-opacity" src="https://modao.cc/agent-py/media/generated_images/2026-02-05/c9212ff233aa4c9aa8bfbe2c2a6f3566.jpg"/>
+<svg aria-hidden="true" class="iconify text-2xl text-slate-300 iconify--material-symbols" data-icon="material-symbols:image-outline" height="1em" role="img" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M5 21q-.825 0-1.412-.587T3 19V5q0-.825.588-1.412T5 3h14q.825 0 1.413.588T21 5v14q0 .825-.587 1.413T19 21zm0-2h14V5H5zm1-2h12l-3.75-5l-3 4L9 13zm-1 2V5z" fill="currentColor"></path></svg>
+<label class="mt-1 cursor-pointer flex flex-col items-center">
+<span class="text-[10px] text-indigo-500 font-medium hover:underline">点击查看</span>
+<span class="text-[9px] text-slate-400 mt-0.5">或点击生成</span>
+</label>
+</div>
+<div class="relative bg-slate-100 rounded-md overflow-hidden border border-dashed border-slate-300 flex flex-col items-center justify-center group">
+<svg aria-hidden="true" class="iconify text-2xl text-slate-300 iconify--material-symbols" data-icon="material-symbols:movie-outline" height="1em" role="img" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="m4 4l2 4h3L7 4h2l2 4h3l-2-4h2l2 4h3l-2-4h3q.825 0 1.413.588T22 6v12q0 .825-.587 1.413T20 20H4q-.825 0-1.412-.587T2 18V6q0-.825.588-1.412T4 4m0 6v8h16v-8zm0 0v8z" fill="currentColor"></path></svg>
+<span class="text-[10px] text-slate-400 mt-1">等待中...</span>
+</div>
+</div>
+<div class="flex space-x-2">
+<button class="flex-1 bg-indigo-600 text-white text-[11px] py-1.5 rounded hover:bg-indigo-700 font-medium tracking-wide">生成图片</button>
+<button class="flex-1 bg-purple-600 text-white text-[11px] py-1.5 rounded hover:bg-purple-700 font-medium tracking-wide flex items-center justify-center space-x-1">
+<svg aria-hidden="true" class="iconify iconify--material-symbols" data-icon="material-symbols:videocam" height="1em" role="img" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M4 20q-.825 0-1.412-.587T2 18V6q0-.825.588-1.412T4 4h12q.825 0 1.413.588T18 6v4.5l4-4v11l-4-4V18q0 .825-.587 1.413T16 20z" fill="currentColor"></path></svg>
+<span>生成视频</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- 分组2：夜晚风格 -->
+<div class="bg-white rounded-lg border border-slate-200 shadow-sm p-4 flex space-x-4 border-l-4 border-l-indigo-500">
+<div class="w-48 space-y-2 shrink-0">
+<div class="text-[10px] font-bold text-slate-400 mb-1">场景文本 (#5-8)</div>
+<div class="bg-slate-50 border border-slate-100 rounded p-2 text-xs text-slate-700 leading-relaxed">
+<span class="text-indigo-500 font-mono mr-1">#5</span> neighbors heard growing screams
+</div>
+<div class="bg-slate-50 border border-slate-100 rounded p-2 text-xs text-slate-700 leading-relaxed">
+<span class="text-indigo-500 font-mono mr-1">#6</span> emergency responders arrived
+</div>
+</div>
+<!-- 人物 -->
+<div class="w-24 shrink-0 px-3">
+<div class="space-y-1.5 pt-4">
+<div class="flex items-center space-x-1.5 text-[10px] bg-indigo-50 p-1 rounded">
+<input checked="" class="w-3 h-3 text-indigo-600" type="checkbox"/>
+<span class="font-bold text-indigo-700">警探</span>
+</div>
+</div>
+</div>
+<!-- 提示词提示 -->
+<div class="flex-grow flex flex-col space-y-2">
+<div class="text-[10px] font-bold text-slate-400">视觉提示词 (Hanna-Barbera Style)</div>
+<div class="flex-grow relative text-xs text-slate-500 italic border border-slate-100 rounded p-3 bg-slate-50">
+longjuan, "Scooby-Doo animation style, deep purple and dark green night palette. A suburban street view through a window, two neighbors holding a flashlight, worried expressions..."
+<div class="absolute bottom-2 right-2 flex space-x-1">
+<button class="bg-emerald-500 text-white px-2 py-0.5 rounded-sm">修改提示</button>
+<button class="bg-blue-500 text-white px-2 py-0.5 rounded-sm">查看源文</button>
+</div>
+</div>
+</div>
+<!-- 展示预览 -->
+<div class="w-[280px] shrink-0 space-y-2">
+<div class="grid grid-cols-1 h-32">
+<div class="bg-slate-900 rounded flex items-center justify-center relative group">
+<img alt="Preview" class="w-full h-full object-cover" id="img2" src="https://modao.cc/agent-py/media/generated_images/2026-02-05/c9212ff233aa4c9aa8bfbe2c2a6f3566.jpg"/>
+<div class="absolute inset-0 bg-blue-500/10 flex items-center justify-center">
+<span class="text-white bg-black/40 px-3 py-1 rounded text-[11px] backdrop-blur-sm">预览就绪</span>
+</div>
+</div>
+</div>
+<div class="flex space-x-2">
+<button class="flex-1 border border-slate-200 text-slate-600 text-[11px] py-1.5 rounded hover:bg-slate-50">重新生成</button>
+<button class="flex-1 bg-slate-800 text-white text-[11px] py-1.5 rounded hover:bg-slate-900 font-medium">播放视频</button>
+</div>
+</div>
+</div>
+<!-- 数据统计/状态条 -->
+<div class="bg-indigo-50/50 rounded-lg border border-indigo-100 p-3 flex justify-around text-[10px] text-indigo-600 font-medium">
+<div class="flex items-center space-x-1.5"><svg aria-hidden="true" class="iconify iconify--material-symbols" data-icon="material-symbols:list-alt" height="1em" role="img" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M8 17q.425 0 .713-.288T9 16t-.288-.712T8 15t-.712.288T7 16t.288.713T8 17m0-4q.425 0 .713-.288T9 12t-.288-.712T8 11t-.712.288T7 12t.288.713T8 13m0-4q.425 0 .713-.288T9 8t-.288-.712T8 7t-.712.288T7 8t.288.713T8 9m3 8h6v-2h-6zm0-4h6v-2h-6zm0-4h6V7h-6zM5 21q-.825 0-1.412-.587T3 19V5q0-.825.588-1.412T5 3h14q.825 0 1.413.588T21 5v14q0 .825-.587 1.413T19 21z" fill="currentColor"></path></svg><span>总分镜: 13</span></div>
+<div class="flex items-center space-x-1.5"><svg aria-hidden="true" class="iconify iconify--material-symbols" data-icon="material-symbols:image" height="1em" role="img" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M5 21q-.825 0-1.412-.587T3 19V5q0-.825.588-1.412T5 3h14q.825 0 1.413.588T21 5v14q0 .825-.587 1.413T19 21zm1-4h12l-3.75-5l-3 4L9 13z" fill="currentColor"></path></svg><span>已生成图片: 4/13</span></div>
+<div class="flex items-center space-x-1.5"><svg aria-hidden="true" class="iconify iconify--material-symbols" data-icon="material-symbols:videocam" height="1em" role="img" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M4 20q-.825 0-1.412-.587T2 18V6q0-.825.588-1.412T4 4h12q.825 0 1.413.588T18 6v4.5l4-4v11l-4-4V18q0 .825-.587 1.413T16 20z" fill="currentColor"></path></svg><span>视频进度: 15%</span></div>
+<div class="flex items-center space-x-1.5"><svg aria-hidden="true" class="iconify iconify--material-symbols" data-icon="material-symbols:check-circle" height="1em" role="img" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="m10.6 16.6l7.05-7.05l-1.4-1.4l-5.65 5.65l-2.85-2.85l-1.4 1.4zM12 22q-2.075 0-3.9-.788t-3.175-2.137T2.788 15.9T2 12t.788-3.9t2.137-3.175T8.1 2.788T12 2t3.9.788t3.175 2.137T21.213 8.1T22 12t-.788 3.9t-2.137 3.175t-3.175 2.138T12 22" fill="currentColor"></path></svg><span>状态: 就绪</span></div>
+</div>
+</main>
+<!-- 底部状态栏 -->
+<footer class="h-8 bg-white border-t border-slate-200 flex items-center px-4 justify-between text-[10px] text-slate-400 shrink-0">
+<div class="flex items-center space-x-4">
+<span>已加载 34 字库</span>
+<span>显存占用: 4.2GB / 12GB</span>
+</div>
+<div class="flex items-center space-x-4">
+<div class="flex items-center space-x-1 text-emerald-500">
+<svg aria-hidden="true" class="iconify iconify--material-symbols" data-icon="material-symbols:circle" height="1em" role="img" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M12 22q-2.075 0-3.9-.788t-3.175-2.137T2.788 15.9T2 12t.788-3.9t2.137-3.175T8.1 2.788T12 2t3.9.788t3.175 2.137T21.213 8.1T22 12t-.788 3.9t-2.137 3.175t-3.175 2.138T12 22" fill="currentColor"></path></svg>
+<span>GPU加速已开启</span>
+</div>
+<span class="text-slate-500">项目: 1</span>
+</div>
+</footer>
+</div>
+
+<!-- Modals -->
+<!-- Create Project Modal -->
+<div class="hidden absolute inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4" id="createProjectModal">
+<div class="bg-white w-[500px] rounded-2xl shadow-2xl modal-animation overflow-hidden">
+<div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
+<h3 class="font-bold text-slate-700 flex items-center gap-2">
+<span class="iconify text-blue-600" data-icon="mdi:folder-plus"></span> 创建新项目
+</h3>
+<button class="text-slate-400 hover:text-slate-600" onclick="toggleModal('createProjectModal')"><span class="iconify" data-icon="mdi:close"></span></button>
+</div>
+<div class="p-6 space-y-4">
+<div class="space-y-1">
+<label class="text-xs font-bold text-slate-500">项目名称 <span class="text-red-500">*</span></label>
+<input class="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5 text-sm focus:border-blue-500 focus:outline-none transition-all" placeholder="输入项目名称" type="text"/>
+</div>
+<div class="space-y-1">
+<label class="text-xs font-bold text-slate-500">音频文件 <span class="text-red-500">*</span></label>
+<div class="flex space-x-2">
+<input class="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-sm" placeholder="选择音频文件" readonly="" type="text"/>
+<button class="bg-slate-100 px-4 py-2 rounded-lg text-sm font-medium hover:bg-slate-200">浏览</button>
+</div>
+</div>
+<div class="space-y-1">
+<label class="text-xs font-bold text-slate-500">字幕文件 <span class="text-red-500">*</span></label>
+<div class="flex space-x-2">
+<input class="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-sm" placeholder="选择SRT或TXT文件" readonly="" type="text"/>
+<button class="bg-slate-100 px-4 py-2 rounded-lg text-sm font-medium hover:bg-slate-200">浏览</button>
+</div>
+</div>
+</div>
+<div class="p-4 bg-slate-50 flex justify-end space-x-3">
+<button type="button" class="px-6 py-2 text-slate-500 font-medium hover:bg-slate-100 rounded-lg transition-colors" onclick="toggleModal('createProjectModal')">取消</button>
+<button type="button" class="px-8 py-2 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 shadow-md" data-action="create-submit">开始处理</button>
+</div>
+</div>
+</div>
+
+<!-- 人物列表弹窗 -->
+<div class="hidden absolute inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4" id="characterListModal">
+<div class="bg-[#f5f6f7] w-[900px] max-h-[85vh] rounded-xl shadow-2xl flex flex-col border border-slate-200 modal-animation overflow-hidden">
+<header class="h-12 bg-white border-b border-slate-200 flex items-center justify-between px-4 shrink-0">
+<div class="flex items-center gap-2">
+<span class="iconify text-indigo-600 text-xl" data-icon="logos:matrix"></span>
+<span class="text-sm font-medium text-slate-700">人物列表管理</span>
+</div>
+<button type="button" class="text-slate-400 hover:text-red-500 transition-colors" onclick="toggleModal('characterListModal')"><span class="iconify text-xl" data-icon="mdi:close"></span></button>
+</header>
+<section class="p-4 bg-white flex items-center justify-between shrink-0">
+<div class="flex items-center gap-4">
+<h1 class="text-lg font-bold text-slate-800">人物列表管理</h1>
+<button type="button" class="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg shadow-sm transition-all text-sm" onclick="toggleModal('addCharacterModal')">
+<span class="iconify" data-icon="mdi:plus"></span>
+<span>添加新人物</span>
+</button>
+<button type="button" class="flex items-center gap-2 bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded-lg shadow-sm transition-all text-sm">
+<span class="iconify" data-icon="mdi:robot"></span>
+<span>一键生成</span>
+</button>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-slate-600 text-sm">存储位置：</span>
+<select class="border border-slate-200 rounded-lg px-3 py-1.5 text-sm outline-none focus:border-indigo-500 bg-white">
+<option value="global">全局</option>
+<option value="project">项目</option>
+</select>
+</div>
+</section>
+<div class="px-4 py-2 bg-slate-100 border-b border-slate-200">
+<h2 class="text-sm font-bold text-slate-700">现有人物列表</h2>
+</div>
+<main class="flex-1 overflow-y-auto p-4 space-y-4 hide-scrollbar min-h-0">
+<div class="bg-white rounded-lg border border-slate-200 p-5 space-y-3 shadow-sm">
+<div class="flex items-center gap-2 p-2 bg-slate-50 border border-slate-100 rounded-lg">
+<span class="font-bold text-slate-700 text-sm">角色:</span>
+<span class="text-slate-600 text-sm">Robert Markle</span>
+</div>
+<div class="flex items-center gap-2 p-2 bg-slate-50 border border-slate-100 rounded-lg">
+<span class="iconify text-orange-400" data-icon="mdi:account-badge"></span>
+<span class="font-bold text-slate-700 text-sm">代称:</span>
+<span class="text-slate-600 text-sm">89岁老人</span>
+</div>
+<div class="p-3 bg-slate-50 border border-slate-100 rounded-lg text-sm text-slate-600 italic">
+<span class="font-bold text-slate-700 mr-2">特征:</span>一位89岁的老年男性，白发稀疏，面容布满皱纹。眼睛为浅蓝色。上身穿着格子衬衫，下身穿着卡其色长裤，身材瘦削。
+</div>
+<div class="space-y-1">
+<label class="text-xs font-bold text-slate-500 px-1">英文生图提示:</label>
+<div class="w-full h-24 p-3 border border-slate-200 rounded-lg text-sm text-slate-500 overflow-y-auto bg-white">An 89-year-old elderly male, thin white hair, face covered in wrinkles. Light blue eyes. Wearing a checkered shirt on top and khaki trousers on the bottom, thin build.</div>
+</div>
+</div>
+<div class="bg-white rounded-lg border border-slate-200 p-5 space-y-3 shadow-sm">
+<div class="flex items-center gap-2 p-2 bg-slate-50 border border-slate-100 rounded-lg">
+<span class="font-bold text-slate-700 text-sm">角色:</span>
+<span class="text-slate-600 text-sm">野生动物官员</span>
+</div>
+<div class="flex items-center gap-2 p-2 bg-slate-50 border border-slate-100 rounded-lg">
+<span class="iconify text-blue-400" data-icon="mdi:shield-account"></span>
+<span class="font-bold text-slate-700 text-sm">代称:</span>
+<span class="text-slate-600 text-sm">官员, 野生动物官员</span>
+</div>
+</div>
+</main>
+<footer class="h-14 bg-white border-t border-slate-200 flex items-center justify-start px-4 gap-3 shrink-0">
+<button type="button" class="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-5 py-2 rounded-lg text-sm transition-all focus:ring-2 focus:ring-blue-300">
+<span class="iconify" data-icon="mdi:content-save"></span>
+<span>保存修改</span>
+</button>
+<button type="button" class="flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white px-5 py-2 rounded-lg text-sm transition-all" onclick="toggleModal('characterListModal')">
+<span class="iconify" data-icon="mdi:close-circle"></span>
+<span>关闭</span>
+</button>
+</footer>
+</div>
+</div>
+
+<!-- 添加新人物子弹窗 -->
+<div class="hidden absolute inset-0 bg-black/50 z-[55] flex items-center justify-center backdrop-blur-sm" id="addCharacterModal">
+<div class="w-[600px] bg-[#f5f6f7] rounded-xl shadow-2xl modal-animation overflow-hidden flex flex-col border border-white/20">
+<header class="h-10 bg-white border-b border-slate-100 flex items-center justify-between px-4">
+<div class="flex items-center gap-2">
+<span class="iconify text-indigo-600" data-icon="logos:matrix"></span>
+<span class="text-xs font-medium">添加新人物</span>
+</div>
+<button type="button" class="text-slate-400 hover:text-red-500" onclick="closeAddCharacterModal()"><span class="iconify" data-icon="mdi:close"></span></button>
+</header>
+<div class="p-6 space-y-4">
+<div class="flex items-center gap-3">
+<span class="iconify text-indigo-600 text-2xl" data-icon="mdi:account-plus"></span>
+<h2 class="text-lg font-bold text-slate-800">添加新人物</h2>
+</div>
+<div class="space-y-2">
+<label class="text-sm font-bold text-slate-700">人物名称 <span class="text-red-500">*</span></label>
+<input class="w-full px-4 py-3 border-2 border-indigo-400 bg-white rounded-lg outline-none focus:ring-2 focus:ring-indigo-200 transition-all text-sm" id="charName" placeholder="请输入人物名称，例如：张三、李四" type="text"/>
+<p class="hidden text-xs text-red-500" id="charNameError">请输入人物名称</p>
+</div>
+<div class="space-y-2">
+<label class="text-sm font-bold text-slate-700">提示词 <span class="text-red-500">*</span></label>
+<div class="relative">
+<textarea class="w-full px-4 py-3 border-2 border-slate-200 bg-white rounded-lg outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition-all text-sm resize-none" id="charPrompt" rows="5" placeholder="请输入人物提示词，例如：30岁男性，高挑身材..." oninput="updateCharCount()"></textarea>
+<div class="absolute bottom-3 right-4 text-xs text-slate-400">字数: <span id="charCount">0</span></div>
+</div>
+<p class="hidden text-xs text-red-500" id="charPromptError">请输入人物提示词</p>
+</div>
+<div class="flex items-start gap-3 p-3 bg-blue-50/50 border-l-4 border-blue-400 rounded-r-lg">
+<span class="text-sm text-slate-600 leading-relaxed">提示：详细描述人物外貌、服装、年龄等信息，用于AI生成图像。</span>
+</div>
+</div>
+<footer class="p-4 bg-slate-50 flex justify-end gap-3">
+<button type="button" class="px-6 py-2.5 bg-slate-200 text-slate-800 font-medium rounded-lg hover:bg-slate-300 transition-colors" onclick="validateAndSubmitCharacter()">确定添加</button>
+<button type="button" class="px-6 py-2.5 bg-white border border-slate-300 text-slate-800 font-medium rounded-lg hover:bg-slate-50 transition-colors" onclick="closeAddCharacterModal()">取消</button>
+</footer>
+</div>
+</div>
+
+<!-- 添加成功提示子弹窗 -->
+<div class="hidden absolute inset-0 bg-black/40 z-[55] flex items-center justify-center" id="successCharacterModal">
+<div class="w-[400px] bg-white rounded-2xl shadow-2xl modal-animation p-6 relative">
+<button type="button" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600" onclick="toggleModal('successCharacterModal')"><span class="iconify text-2xl" data-icon="mdi:close"></span></button>
+<div class="flex items-center gap-3 mb-6">
+<span class="iconify text-indigo-600 text-2xl" data-icon="logos:matrix"></span>
+<span class="text-xl font-semibold text-slate-800">成功</span>
+</div>
+<div class="flex items-center justify-center py-4 gap-4">
+<div class="w-14 h-14 bg-blue-500 rounded-full flex items-center justify-center">
+<span class="iconify text-white text-3xl" data-icon="mdi:information-variant"></span>
+</div>
+<span class="text-lg font-medium text-slate-800" id="successCharacterMessage">已成功添加 1 个人物</span>
+</div>
+<div class="flex justify-center mt-8 mb-2">
+<button type="button" class="w-40 py-2.5 border border-slate-300 rounded-xl text-base font-medium hover:bg-slate-50 transition-colors" onclick="toggleModal('successCharacterModal')">OK</button>
+</div>
+</div>
+</div>
+
+<!-- Settings Modal -->
+<div class="hidden absolute inset-0 bg-slate-900/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4" id="settingsModal">
+<div class="bg-slate-50 w-[900px] h-[700px] rounded-3xl shadow-2xl flex flex-col modal-animation overflow-hidden">
+<div class="bg-white px-8 py-6 border-b border-slate-200 flex justify-between items-center shrink-0">
+<h2 class="text-2xl font-black text-slate-800 tracking-tight">应用设置</h2>
+<button class="w-10 h-10 flex items-center justify-center bg-slate-100 hover:bg-red-500 hover:text-white rounded-xl transition-all" onclick="toggleModal('settingsModal')"><span class="iconify" data-icon="mdi:close"></span></button>
+</div>
+<div class="flex flex-1 overflow-hidden">
+<!-- Settings Nav -->
+<aside class="w-48 bg-white border-r border-slate-100 p-4 space-y-2 shrink-0" id="settingsNav">
+<button class="w-full text-left px-4 py-3 bg-blue-50 text-blue-600 rounded-xl font-bold text-sm transition-all border border-blue-100" onclick="switchSettingsTab(0)">大模型</button>
+<button class="w-full text-left px-4 py-3 text-slate-500 hover:bg-slate-50 rounded-xl font-medium text-sm transition-all" onclick="switchSettingsTab(1)">图像生成</button>
+<button class="w-full text-left px-4 py-3 text-slate-500 hover:bg-slate-50 rounded-xl font-medium text-sm transition-all" onclick="switchSettingsTab(2)">视频生成</button>
+<button class="w-full text-left px-4 py-3 text-slate-500 hover:bg-slate-50 rounded-xl font-medium text-sm transition-all" onclick="switchSettingsTab(3)">翻译引擎</button>
+<button class="w-full text-left px-4 py-3 text-slate-500 hover:bg-slate-50 rounded-xl font-medium text-sm transition-all" onclick="switchSettingsTab(4)">剪映草稿</button>
+</aside>
+<!-- Settings Content -->
+<div class="flex-1 p-8 overflow-y-auto hide-scrollbar bg-white border border-slate-100 rounded-tl-3xl m-4 shadow-inner" id="settingsContent">
+<!-- Model Settings -->
+<section class="space-y-6">
+<div class="pb-2 border-b border-slate-100">
+<h4 class="text-lg font-bold text-slate-700">大模型配置 (Unified API)</h4>
+<p class="text-xs text-slate-400">设置用于生成创作灵感和优化提示词的核心大语言模型</p>
+</div>
+<div class="grid grid-cols-2 gap-x-8 gap-y-4">
+<div class="space-y-1">
+<label class="text-xs font-bold text-slate-400">API 地址 (URL)</label>
+<input class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all" type="text" value="https://newapi.laimaipro.com"/>
+</div>
+<div class="space-y-1">
+<label class="text-xs font-bold text-slate-400">API 密钥 (Key)</label>
+<div class="relative">
+<input class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm" type="password" value="sk-xxxxxxxxxxxxxxxxxxxx"/>
+<button class="absolute right-3 top-2.5 text-blue-600 text-xs font-bold hover:underline">显示</button>
+</div>
+</div>
+<div class="space-y-1">
+<label class="text-xs font-bold text-slate-400">模型名称</label>
+<select class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm">
+<option>gemini-3-pro-preview</option>
+<option>gpt-4o</option>
+<option>claude-3-opus</option>
+</select>
+</div>
+<div class="space-y-1">
+<label class="text-xs font-bold text-slate-400">温度参数 (Temperature)</label>
+<div class="flex items-center space-x-3">
+<input id="temperatureSlider" class="flex-1 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer" max="1" min="0.1" step="0.1" type="range" value="0.7"/>
+<span id="temperatureValue" class="text-sm font-medium text-slate-600 min-w-[2.5rem] text-right">0.7</span>
+</div>
+</div>
+<div class="space-y-1">
+<label class="text-xs font-bold text-slate-400">最大令牌数</label>
+<input class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all" type="number" value="4000" min="1" step="100"/>
+</div>
+<div class="space-y-1">
+<label class="text-xs font-bold text-slate-400">超时时间 (秒)</label>
+<input class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all" type="number" value="30" min="1" step="1"/>
+</div>
+<div class="space-y-1">
+<label class="text-xs font-bold text-slate-400">批量生成大小</label>
+<input class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all" type="number" value="100" min="1" step="10"/>
+</div>
+</div>
+</section>
+
+<!-- Image Generation Settings -->
+<section class="hidden space-y-6">
+<div class="setting-card bg-white border border-slate-200 rounded-xl p-5 mb-4" id="imageEngineSettings">
+<h3 class="text-sm font-bold text-slate-700 mb-4 flex items-center gap-2">
+<span class="w-1.5 h-4 bg-blue-500 rounded-full"></span> 图像生成引擎
+</h3>
+<div class="flex gap-6 pl-4">
+<label class="flex items-center gap-2 cursor-pointer group">
+<input checked="" class="w-4 h-4 text-blue-600" name="img_engine" type="radio" value="comfyui"/>
+<span class="text-sm text-slate-600 group-hover:text-blue-600">ComfyUI</span>
+</label>
+<label class="flex items-center gap-2 cursor-pointer group">
+<input class="w-4 h-4 text-blue-600" name="img_engine" type="radio" value="banana"/>
+<span class="text-sm text-slate-600 group-hover:text-blue-600">Banana</span>
+</label>
+</div>
+</div>
+<div class="setting-card bg-white border border-slate-200 rounded-xl p-5 mb-4 hidden" id="imageComfySettings">
+<h3 class="text-sm font-bold text-slate-700 mb-4">ComfyUI 设置</h3>
+<div class="space-y-3">
+<div class="flex items-center gap-3 mb-3">
+<span class="w-24 text-sm text-slate-500 font-medium shrink-0">API 地址:</span>
+<input class="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none" type="text" value="https://j7jvry1a9y21zl5t-8188.containerx-gpu.com"/>
+<button class="px-4 py-2 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-lg text-sm font-medium shrink-0">测试连接</button>
+</div>
+<div class="flex items-center gap-3 mb-3">
+<span class="w-24 text-sm text-slate-500 font-medium shrink-0">默认工作流:</span>
+<input class="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none" type="text" value="C:/Users/18710/Downloads/莱米文生图质量高版v1.json"/>
+<button class="px-4 py-2 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-lg text-sm font-medium shrink-0">浏览</button>
+</div>
+</div>
+</div>
+<div class="setting-card border border-dashed border-slate-200 bg-slate-50/50 rounded-xl p-5" id="imageBananaSettings">
+<h3 class="text-sm font-bold text-slate-400 mb-4">Banana 设置</h3>
+<div class="space-y-3 opacity-90">
+<div class="flex items-center gap-3 mb-3">
+<span class="w-24 text-sm text-slate-500 font-medium shrink-0">请求URL:</span>
+<input class="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm" type="text" value="https://newapi.laimaipro.com"/>
+<button class="px-4 py-2 bg-slate-100 border border-slate-200 rounded-lg text-sm font-medium shrink-0">测试连接</button>
+</div>
+<div class="flex items-center gap-3 mb-3">
+<span class="w-24 text-sm text-slate-500 font-medium shrink-0">API Key:</span>
+<input class="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm" placeholder="请输入Banana API Key" type="password" value="12345678"/>
+<button class="px-4 py-2 bg-slate-100 border border-slate-200 rounded-lg text-sm font-medium shrink-0">显示</button>
+</div>
+<div class="grid grid-cols-3 gap-4">
+<div class="flex flex-col gap-1">
+<label class="text-sm text-slate-500 font-medium">图像分辨率:</label>
+<select class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm" value="1K">
+  <option selected>1K</option>
+  <option>2K</option>
+  <option>4K</option>
+</select>
+</div>
+<div class="flex flex-col gap-1">
+<label class="text-sm text-slate-500 font-medium">长宽比:</label>
+<select class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm" value="Auto">
+  <option selected>Auto</option>
+  <option>1:1</option>
+  <option>3:4</option>
+  <option>4:3</option>
+  <option>9:16</option>
+  <option>16:9</option>
+  <option>21:9</option>
+</select>
+</div>
+<div class="flex flex-col gap-1">
+<label class="text-sm text-slate-500 font-medium">批量并发数:</label>
+<input class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm" type="number" value="10" min="1" step="1"/>
+</div>
+</div>
+</div>
+</div>
+</section>
+
+<!-- Video Generation Settings -->
+<section class="hidden space-y-6">
+<div class="setting-card bg-white border border-slate-200 rounded-xl p-5 mb-4">
+<h3 class="text-sm font-bold text-slate-700 mb-4">视频生成引擎</h3>
+<div class="flex gap-6 pl-4">
+<label class="flex items-center gap-2 cursor-pointer">
+<input checked="" name="vid_engine" type="radio" value="comfyui" class="w-4 h-4 text-blue-600" onchange="selectVideoEngine('comfyui')"/>
+<span class="text-sm text-slate-600">ComfyUI</span>
+</label>
+<label class="flex items-center gap-2 cursor-pointer">
+<input name="vid_engine" type="radio" value="sora2" class="w-4 h-4 text-blue-600" onchange="selectVideoEngine('sora2')"/>
+<span class="text-sm text-slate-600">Sora-2</span>
+</label>
+<label class="flex items-center gap-2 cursor-pointer">
+<input name="vid_engine" type="radio" value="veo3" class="w-4 h-4 text-blue-600" onchange="selectVideoEngine('veo3')"/>
+<span class="text-sm text-slate-600">Veo-3</span>
+</label>
+</div>
+</div>
+<div class="setting-card bg-white border border-slate-200 rounded-xl p-5 mb-4" id="videoComfySettings">
+<h3 class="text-sm font-bold text-slate-700 mb-4">ComfyUI 视频生成设置</h3>
+<div class="space-y-3">
+<div class="flex items-center gap-3 mb-3">
+<span class="w-24 text-sm text-slate-500 font-medium shrink-0">API 地址:</span>
+<input class="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none" type="text" value="https://j7jvry1a9y21zl5t-s1t-8188.container-x-gpu.com"/>
+</div>
+<div class="flex items-center gap-3 mb-3">
+<span class="w-24 text-sm text-slate-500 font-medium shrink-0">默认工作流:</span>
+<input class="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none" type="text" value="C:/Users/18710/Downloads/莱米视频生成工作流v1.json"/>
+<button class="px-4 py-2 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-lg text-sm font-medium shrink-0">浏览</button>
+</div>
+<div class="flex items-center gap-3 mb-3">
+<span class="w-24 text-sm text-slate-500 font-medium shrink-0">时长(帧):</span>
+<input class="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm" type="text" value="49 帧"/>
+</div>
+</div>
+</div>
+<div class="setting-card bg-white border border-slate-200 rounded-xl p-5 mb-4 hidden" id="videoSoraSettings">
+<h3 class="text-sm font-bold text-slate-700 mb-4">Sora-2 设置</h3>
+<div class="space-y-3">
+<div class="flex items-center gap-3 mb-3">
+<span class="w-24 text-sm text-slate-500 font-medium shrink-0">请求URL:</span>
+<input class="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none" type="text" value="https://newapi.laimaipro.com/v1/videos"/>
+<button class="px-4 py-2 bg-slate-100 border border-slate-200 rounded-lg text-sm font-medium shrink-0">测试连接</button>
+</div>
+<div class="flex items-center gap-3 mb-3">
+<span class="w-24 text-sm text-slate-500 font-medium shrink-0">API Key:</span>
+<input class="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm" placeholder="请输入 Sora-2 API Key" type="password"/>
+<button class="px-4 py-2 bg-slate-100 border border-slate-200 rounded-lg text-sm font-medium shrink-0">显示</button>
+</div>
+<div class="grid grid-cols-3 gap-4">
+<div class="flex flex-col gap-1">
+<label class="text-sm text-slate-500 font-medium">模型名称</label>
+<input class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm" type="text" value="sora-2"/>
+</div>
+<div class="flex flex-col gap-1">
+<label class="text-sm text-slate-500 font-medium">视频尺寸</label>
+<input class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm" type="text" value="1280×720（横屏 720P）"/>
+</div>
+<div class="flex flex-col gap-1">
+<label class="text-sm text-slate-500 font-medium">生成秒数 / 批量并发</label>
+<div class="grid grid-cols-2 gap-2">
+<input class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm" type="number" value="15" min="1" step="1" placeholder="秒数"/>
+<input class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm" type="number" value="7" min="1" step="1" placeholder="并发数"/>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="setting-card bg-white border border-slate-200 rounded-xl p-5 mb-4 hidden" id="videoVeoSettings">
+<h3 class="text-sm font-bold text-slate-700 mb-4">Veo-3 设置</h3>
+<div class="space-y-3">
+<div class="flex items-center gap-3 mb-3">
+<span class="w-24 text-sm text-slate-500 font-medium shrink-0">请求URL:</span>
+<input class="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none" type="text" value="https://newapi.laimaipro.com/v1/videos"/>
+<button class="px-4 py-2 bg-slate-100 border border-slate-200 rounded-lg text-sm font-medium shrink-0">测试连接</button>
+</div>
+<div class="flex items-center gap-3 mb-3">
+<span class="w-24 text-sm text-slate-500 font-medium shrink-0">API Key:</span>
+<input class="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm" placeholder="请输入 Veo-3 API Key" type="password"/>
+<button class="px-4 py-2 bg-slate-100 border border-slate-200 rounded-lg text-sm font-medium shrink-0">显示</button>
+</div>
+<div class="grid grid-cols-3 gap-4">
+<div class="flex flex-col gap-1">
+<label class="text-sm text-slate-500 font-medium">模型名称</label>
+<input class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm" type="text" value="veo-3"/>
+</div>
+<div class="flex flex-col gap-1">
+<label class="text-sm text-slate-500 font-medium">视频尺寸</label>
+<input class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm" type="text" value="720×1280（竖屏 720P）"/>
+</div>
+<div class="flex flex-col gap-1">
+<label class="text-sm text-slate-500 font-medium">生成秒数 / 批量并发</label>
+<div class="grid grid-cols-2 gap-2">
+<input class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm" type="number" value="10" min="1" step="1" placeholder="秒数"/>
+<input class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm" type="number" value="3" min="1" step="1" placeholder="并发数"/>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="setting-card border border-blue-100 bg-blue-50/20 rounded-xl p-5">
+<h3 class="text-sm font-bold text-blue-700 mb-4 flex items-center gap-2">
+<span class="iconify" data-icon="material-symbols:psychology-outline"></span> 豆包视觉理解模型 (提示词生成)
+</h3>
+<div class="flex items-center gap-3">
+<span class="w-24 text-sm text-slate-500 font-medium shrink-0">API Key:</span>
+<input class="flex-1 bg-white border border-blue-200 rounded-lg px-3 py-2 text-sm" type="password" value="sk-******"/>
+<button class="px-4 py-2 bg-white border border-blue-200 text-blue-600 rounded-lg text-sm font-medium shrink-0">显示</button>
+</div>
+</div>
+</section>
+
+<!-- Translation Engine Settings -->
+<section class="hidden space-y-6">
+<div class="setting-card bg-white border border-slate-200 rounded-xl p-5">
+<h3 class="text-sm font-bold text-slate-700 mb-4">腾讯翻译配置</h3>
+<div class="space-y-3">
+<div class="flex items-center gap-3 mb-3">
+<span class="w-24 text-sm text-slate-500 font-medium shrink-0">SecretId:</span>
+<input class="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none" type="text" value=""/>
+<button class="px-4 py-2 bg-slate-100 border border-slate-200 rounded-lg text-sm font-medium shrink-0">隐藏</button>
+</div>
+<div class="flex items-center gap-3 mb-3">
+<span class="w-24 text-sm text-slate-500 font-medium shrink-0">SecretKey:</span>
+<input class="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm" type="password" value="••••••••••••••••"/>
+<button class="px-4 py-2 bg-slate-100 border border-slate-200 rounded-lg text-sm font-medium shrink-0">显示</button>
+</div>
+<div class="flex items-center gap-3 mb-3">
+<span class="w-24 text-sm text-slate-500 font-medium shrink-0">地域:</span>
+<input class="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm" type="text" value="ap-beijing"/>
+<button class="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm font-medium shrink-0">测试连接</button>
+</div>
+</div>
+<p class="mt-4 text-xs text-slate-400 leading-relaxed pl-2 underline decoration-dotted">支持语言: 中、英、日、韩、法、西、意、德、俄、泰、越等</p>
+</div>
+</section>
+
+<!-- CapCut Draft Settings -->
+<section class="hidden space-y-6">
+<div class="setting-card bg-white border border-slate-200 rounded-xl p-5 mb-4">
+<h3 class="text-sm font-bold text-slate-700 mb-4">剪映草稿路径</h3>
+<div class="space-y-3">
+<div class="flex items-center gap-3 mb-3">
+<span class="w-24 text-sm text-slate-500 font-medium shrink-0">草稿位置:</span>
+<input class="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm" placeholder="请选择剪映草稿保存位置" type="text"/>
+<button class="px-4 py-2 bg-slate-100 border border-slate-200 rounded-lg text-sm font-medium shrink-0">浏览</button>
+</div>
+<div class="flex items-center gap-3 mb-3">
+<span class="w-24 text-sm text-slate-500 font-medium shrink-0">国际版位置:</span>
+<input class="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm" placeholder="请选择剪映国际版草稿保存位置" type="text"/>
+<button class="px-4 py-2 bg-slate-100 border border-slate-200 rounded-lg text-sm font-medium shrink-0">浏览</button>
+</div>
+</div>
+</div>
+<div class="setting-card bg-white border border-slate-200 rounded-xl p-5">
+<h3 class="text-sm font-bold text-slate-700 mb-4">关键帧放大设置</h3>
+<div class="flex gap-2 mb-4">
+<button class="px-4 py-1.5 bg-blue-600 text-white rounded-md text-xs font-bold">放大</button>
+<button class="px-4 py-1.5 bg-slate-100 text-slate-500 rounded-md text-xs">缩小</button>
+</div>
+<div class="grid grid-cols-2 gap-4 border border-slate-100 p-4 rounded-xl bg-slate-50/30">
+<div class="space-y-2">
+<p class="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">START 开始</p>
+<div class="flex items-center gap-2">
+<span class="text-xs text-slate-500" data-role="keyframe-scale-label">放大值:</span>
+<input class="w-20 bg-white border border-slate-200 rounded p-1 text-sm" type="number" value="100" data-role="keyframe-start"/>
+</div>
+</div>
+<div class="space-y-2">
+<p class="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">END 结束</p>
+<div class="flex items-center gap-2">
+<span class="text-xs text-slate-500" data-role="keyframe-scale-label">放大值:</span>
+<input class="w-20 bg-white border border-slate-200 rounded p-1 text-sm" type="number" value="133" data-role="keyframe-end"/>
+</div>
+</div>
+</div>
+</div>
+</section>
+</div>
+</div>
+<div class="bg-white p-6 border-t border-slate-200 flex justify-between items-center shrink-0">
+<button type="button" class="text-xs font-bold text-slate-400 hover:text-slate-600 underline" data-action="settings-reset">重置为默认值</button>
+<div class="flex space-x-3">
+<button type="button" class="px-6 py-2.5 border border-slate-200 text-slate-600 font-bold rounded-xl hover:bg-slate-50" onclick="toggleModal('settingsModal')">取消</button>
+<button type="button" class="px-8 py-2.5 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 shadow-lg shadow-blue-200" data-action="settings-save">保存并应用</button>
+</div>
+</div>
+</div>
+</div>
+
+<script src="js/app.js"></script>
+</body>
+</html>
